@@ -5,11 +5,14 @@ const config: ConfigFile = {
   apiFile: './src/store/api/empty-api.ts',
   apiImport: 'emptySplitApi',
   outputFiles: {
-    './src/store/api/generated/todos.ts': {
-      filterEndpoints: [/Todo/]
+    './src/store/api/generated/products.ts': {
+      filterEndpoints: [/Product/]
+    },
+    './src/store/api/generated/categories.ts': {
+      filterEndpoints: [/Categor/]
     },
   },
-  exportName: 'moviesApi',
+  exportName: 'inventoryApi',
   hooks: true,
 }
 
