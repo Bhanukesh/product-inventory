@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import {
   useGetCategoriesQuery,
   useCreateCategoryMutation,
@@ -8,13 +10,13 @@ import {
   useDeleteCategoryMutation,
   useGetProductsByCategoryQuery,
   ProductCategory,
-  CreateCategoryCommand,
 } from '@/store/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { createCategorySchema, updateCategorySchema, CreateCategoryFormData, UpdateCategoryFormData } from '@/lib/validations';
 
 export default function CategoriesPage() {
-  const { data: categories, isLoading: categoriesLoading, refetch: refetchCategories } = useGetCategoriesQuery();
+  const { data: categories, isLoading: categoriesLoading } = useGetCategoriesQuery();
   const [createCategory] = useCreateCategoryMutation();
   const [updateCategory] = useUpdateCategoryMutation();
   const [deleteCategory] = useDeleteCategoryMutation();
@@ -22,9 +24,19 @@ export default function CategoriesPage() {
   const [editingCategory, setEditingCategory] = useState<ProductCategory | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
-  const [formData, setFormData] = useState<Partial<CreateCategoryCommand>>({
-    name: '',
-    description: '',
+
+  // Create form
+  const createForm = useForm<CreateCategoryFormData>({
+    resolver: zodResolver(createCategorySchema),
+    defaultValues: {
+      name: '',
+      description: '',
+    },
+  });
+
+  // Update form
+  const updateForm = useForm<UpdateCategoryFormData>({
+    resolver: zodResolver(updateCategorySchema),
   });
 
   // Get products for selected category
@@ -33,26 +45,25 @@ export default function CategoriesPage() {
     { skip: !selectedCategoryId }
   );
 
-  const handleCreate = async () => {
+  const handleCreate = async (data: CreateCategoryFormData) => {
     try {
-      await createCategory({ createCategoryCommand: formData as CreateCategoryCommand }).unwrap();
+      await createCategory({ createCategoryCommand: data }).unwrap();
       setShowCreateForm(false);
-      setFormData({ name: '', description: '' });
-      refetchCategories();
+      createForm.reset();
     } catch (error) {
       console.error('Failed to create category:', error);
     }
   };
 
-  const handleUpdate = async () => {
+  const handleUpdate = async (data: UpdateCategoryFormData) => {
     if (!editingCategory) return;
     try {
       await updateCategory({
         categoryId: editingCategory.id,
-        updateCategoryCommand: formData,
+        updateCategoryCommand: data,
       }).unwrap();
       setEditingCategory(null);
-      refetchCategories();
+      updateForm.reset();
     } catch (error) {
       console.error('Failed to update category:', error);
     }
@@ -64,7 +75,6 @@ export default function CategoriesPage() {
       if (selectedCategoryId === categoryId) {
         setSelectedCategoryId(null);
       }
-      refetchCategories();
     } catch (error) {
       console.error('Failed to delete category:', error);
     }
@@ -72,9 +82,9 @@ export default function CategoriesPage() {
 
   const startEdit = (category: ProductCategory) => {
     setEditingCategory(category);
-    setFormData({
+    updateForm.reset({
       name: category.name,
-      description: category.description,
+      description: category.description || '',
     });
   };
 
@@ -96,24 +106,32 @@ export default function CategoriesPage() {
           {showCreateForm && (
             <div className="mb-6 p-4 border rounded-lg bg-gray-50">
               <h2 className="text-xl font-semibold mb-4">Create New Category</h2>
-              <div className="space-y-4">
-                <Input
-                  placeholder="Category Name"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                />
-                <Input
-                  placeholder="Description"
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                />
-              </div>
-              <div className="flex gap-2 mt-4">
-                <Button onClick={handleCreate}>Create</Button>
-                <Button variant="outline" onClick={() => setShowCreateForm(false)}>
-                  Cancel
-                </Button>
-              </div>
+              <form onSubmit={createForm.handleSubmit(handleCreate)} className="space-y-4">
+                <div>
+                  <Input
+                    placeholder="Category Name"
+                    {...createForm.register('name')}
+                  />
+                  {createForm.formState.errors.name && (
+                    <p className="text-red-500 text-sm mt-1">{createForm.formState.errors.name.message}</p>
+                  )}
+                </div>
+                <div>
+                  <Input
+                    placeholder="Description"
+                    {...createForm.register('description')}
+                  />
+                  {createForm.formState.errors.description && (
+                    <p className="text-red-500 text-sm mt-1">{createForm.formState.errors.description.message}</p>
+                  )}
+                </div>
+                <div className="flex gap-2">
+                  <Button type="submit">Create</Button>
+                  <Button type="button" variant="outline" onClick={() => setShowCreateForm(false)}>
+                    Cancel
+                  </Button>
+                </div>
+              </form>
             </div>
           )}
 
@@ -121,24 +139,32 @@ export default function CategoriesPage() {
           {editingCategory && (
             <div className="mb-6 p-4 border rounded-lg bg-blue-50">
               <h2 className="text-xl font-semibold mb-4">Edit Category</h2>
-              <div className="space-y-4">
-                <Input
-                  placeholder="Category Name"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                />
-                <Input
-                  placeholder="Description"
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                />
-              </div>
-              <div className="flex gap-2 mt-4">
-                <Button onClick={handleUpdate}>Update</Button>
-                <Button variant="outline" onClick={() => setEditingCategory(null)}>
-                  Cancel
-                </Button>
-              </div>
+              <form onSubmit={updateForm.handleSubmit(handleUpdate)} className="space-y-4">
+                <div>
+                  <Input
+                    placeholder="Category Name"
+                    {...updateForm.register('name')}
+                  />
+                  {updateForm.formState.errors.name && (
+                    <p className="text-red-500 text-sm mt-1">{updateForm.formState.errors.name.message}</p>
+                  )}
+                </div>
+                <div>
+                  <Input
+                    placeholder="Description"
+                    {...updateForm.register('description')}
+                  />
+                  {updateForm.formState.errors.description && (
+                    <p className="text-red-500 text-sm mt-1">{updateForm.formState.errors.description.message}</p>
+                  )}
+                </div>
+                <div className="flex gap-2">
+                  <Button type="submit">Update</Button>
+                  <Button type="button" variant="outline" onClick={() => setEditingCategory(null)}>
+                    Cancel
+                  </Button>
+                </div>
+              </form>
             </div>
           )}
 
