@@ -16,8 +16,34 @@ export const formatPrice = (value: string): string => {
 };
 
 export const formatSKU = (value: string): string => {
-  // Convert to uppercase and remove invalid characters
-  return value.toUpperCase().replace(/[^A-Z0-9\-_]/g, '');
+  // Remove all non-digit characters
+  const digitsOnly = value.replace(/\D/g, '');
+  
+  // Limit to 8 digits max
+  const limitedDigits = digitsOnly.slice(0, 8);
+  
+  // Format as XXX-XXX-XX
+  if (limitedDigits.length >= 6) {
+    const part1 = limitedDigits.slice(0, 3);
+    const part2 = limitedDigits.slice(3, 6);
+    const part3 = limitedDigits.slice(6, 8);
+    
+    if (part3) {
+      return `${part1}-${part2}-${part3}`;
+    } else {
+      return `${part1}-${part2}`;
+    }
+  } else if (limitedDigits.length >= 3) {
+    const part1 = limitedDigits.slice(0, 3);
+    const part2 = limitedDigits.slice(3);
+    return `${part1}-${part2}`;
+  }
+  
+  return limitedDigits;
+};
+
+export const validateSKU = (sku: string): boolean => {
+  return /^\d{3}-\d{3}-\d{2}$/.test(sku);
 };
 
 export const formatStock = (value: string): string => {

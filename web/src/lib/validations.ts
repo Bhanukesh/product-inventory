@@ -11,9 +11,16 @@ export const createProductSchema = z.object({
     .regex(/^[a-zA-Z0-9\s\-_&().,]+$/, 'Product name contains invalid characters'),
   sku: trimmedString
     .min(1, 'SKU is required')
-    .max(50, 'SKU must be less than 50 characters')
-    .regex(/^[A-Z0-9\-_]+$/, 'SKU must contain only uppercase letters, numbers, hyphens, and underscores')
-    .transform(val => val.toUpperCase()),
+    .max(20, 'SKU must be less than 20 characters')
+    .regex(/^\d{3}-\d{3}-\d{2}$/, 'SKU must follow format: XXX-XXX-XX (e.g., 123-456-90)')
+    .transform(val => {
+      // Remove any existing formatting and re-format
+      const digitsOnly = val.replace(/\D/g, '');
+      if (digitsOnly.length === 8) {
+        return `${digitsOnly.slice(0, 3)}-${digitsOnly.slice(3, 6)}-${digitsOnly.slice(6, 8)}`;
+      }
+      return val; // Return as-is if not 8 digits
+    }),
   stock: z.number()
     .int('Stock must be a whole number')
     .min(0, 'Stock cannot be negative')

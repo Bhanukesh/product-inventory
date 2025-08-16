@@ -14,6 +14,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { createProductSchema, updateProductSchema, CreateProductFormData, UpdateProductFormData } from '@/lib/validations';
+import { formatSKU } from '@/lib/validation-helpers';
 
 export default function ProductsPage() {
   const { data: products, isLoading: productsLoading } = useGetProductsQuery();
@@ -122,12 +123,17 @@ export default function ProductsPage() {
               </div>
               <div>
                 <Input
-                  placeholder="SKU"
+                  placeholder="SKU (e.g., 123-456-90)"
                   {...createForm.register('sku')}
+                  onChange={(e) => {
+                    const formatted = formatSKU(e.target.value);
+                    createForm.setValue('sku', formatted);
+                  }}
                 />
                 {createForm.formState.errors.sku && (
                   <p className="text-red-500 text-sm mt-1">{createForm.formState.errors.sku.message}</p>
                 )}
+                <p className="text-gray-500 text-xs mt-1">Format: XXX-XXX-XX (8 digits)</p>
               </div>
               <div>
                 <Input
@@ -216,12 +222,17 @@ export default function ProductsPage() {
               </div>
               <div>
                 <Input
-                  placeholder="SKU"
+                  placeholder="SKU (e.g., 123-456-90)"
                   {...updateForm.register('sku')}
+                  onChange={(e) => {
+                    const formatted = formatSKU(e.target.value);
+                    updateForm.setValue('sku', formatted);
+                  }}
                 />
                 {updateForm.formState.errors.sku && (
                   <p className="text-red-500 text-sm mt-1">{updateForm.formState.errors.sku.message}</p>
                 )}
+                <p className="text-gray-500 text-xs mt-1">Format: XXX-XXX-XX (8 digits)</p>
               </div>
               <div>
                 <Input
