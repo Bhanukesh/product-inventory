@@ -1,71 +1,65 @@
 'use client'
 
-import { useState } from "react";
-import { useGetTodosQuery, useCreateTodoMutation, useUpdateTodoMutation, useDeleteTodoMutation } from "@/store/api/enhanced/todos";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
+import Link from 'next/link';
+import { useGetProductsQuery, useGetCategoriesQuery } from '@/store/api';
+import { Button } from '@/components/ui/button';
 
-export default function TodosPage() {
-    const { data: todos, isLoading, isError } = useGetTodosQuery();
-    const [createTodo] = useCreateTodoMutation();
-    const [updateTodo] = useUpdateTodoMutation();
-    const [deleteTodo] = useDeleteTodoMutation();
-    const [newTodoTitle, setNewTodoTitle] = useState("");
+export default function HomePage() {
+    const { data: products, isLoading: productsLoading } = useGetProductsQuery();
+    const { data: categories, isLoading: categoriesLoading } = useGetCategoriesQuery();
 
-    if (isLoading) {
-        return <div>Loading...</div>;
+    if (productsLoading || categoriesLoading) {
+        return <div className="p-8">Loading...</div>;
     }
-
-    if (isError || !todos) {
-        return <div>Error loading todos.</div>;
-    }
-
-    const handleCreateTodo = () => {
-        if (newTodoTitle.trim()) {
-            createTodo({ createTodoCommand: { title: newTodoTitle } });
-            setNewTodoTitle("");
-        }
-    };
 
     return (
-        <div className="container mx-auto p-4">
-            <h1 className="text-2xl font-bold mb-4">Todos</h1>
-            <div className="flex w-full max-w-sm items-center space-x-2 mb-4">
-                <Input
-                    type="text"
-                    placeholder="Add a new todo"
-                    value={newTodoTitle}
-                    onChange={(e) => setNewTodoTitle(e.target.value)}
-                />
-                <Button onClick={handleCreateTodo}>Add Todo</Button>
+        <div className="container mx-auto p-8">
+            <h1 className="text-4xl font-bold mb-8">Product Inventory System</h1>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                <div className="bg-blue-50 p-6 rounded-lg">
+                    <h2 className="text-2xl font-semibold mb-4">Products</h2>
+                    <p className="text-gray-600 mb-4">Manage your product inventory</p>
+                    <p className="text-3xl font-bold text-blue-600 mb-4">{products?.length || 0}</p>
+                    <Link href="/products">
+                        <Button>Manage Products</Button>
+                    </Link>
+                </div>
+                
+                <div className="bg-green-50 p-6 rounded-lg">
+                    <h2 className="text-2xl font-semibold mb-4">Categories</h2>
+                    <p className="text-gray-600 mb-4">Organize products by categories</p>
+                    <p className="text-3xl font-bold text-green-600 mb-4">{categories?.length || 0}</p>
+                    <Link href="/categories">
+                        <Button>Manage Categories</Button>
+                    </Link>
+                </div>
             </div>
-            <Table>
-                <TableHeader>
-                    <TableRow>
-                        <TableHead className="w-[50px]">Complete</TableHead>
-                        <TableHead>Title</TableHead>
-                        <TableHead className="w-[100px]">Actions</TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {todos.map((todo) => (
-                        <TableRow key={todo.id}>
-                            <TableCell>
-                                <Checkbox
-                                    checked={todo.isComplete!}
-                                    onCheckedChange={() => updateTodo({ id: todo.id!, updateTodoCommand: { id: todo.id!, title: todo.title ?? "", isComplete: !todo.isComplete } })}
-                                />
-                            </TableCell>
-                            <TableCell>{todo.title}</TableCell>
-                            <TableCell>
-                                <Button variant="destructive" onClick={() => deleteTodo({ id: todo.id! })}>Delete</Button>
-                            </TableCell>
-                        </TableRow>
-                    ))}
-                </TableBody>
-            </Table>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Link href="/products" className="bg-white p-4 rounded-lg border hover:shadow-md transition-shadow">
+                    <h3 className="font-semibold">View All Products</h3>
+                    <p className="text-gray-600 text-sm">Browse and manage your product inventory</p>
+                </Link>
+                
+                <Link href="/test-enhanced" className="bg-white p-4 rounded-lg border hover:shadow-md transition-shadow">
+                    <h3 className="font-semibold">Test Enhanced API</h3>
+                    <p className="text-gray-600 text-sm">Test RTK Query enhanced endpoints</p>
+                </Link>
+                
+                <div className="bg-white p-4 rounded-lg border">
+                    <h3 className="font-semibold">API Documentation</h3>
+                    <p className="text-gray-600 text-sm mb-2">View Swagger docs</p>
+                    <a 
+                        href="http://localhost:8001/swagger" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:underline text-sm"
+                    >
+                        Open Swagger UI
+                    </a>
+                </div>
+            </div>
         </div>
     );
 }
